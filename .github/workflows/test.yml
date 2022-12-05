@@ -49,8 +49,8 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          $VCPKG_INSTALLATION_ROOT/installed
-          $VCPKG_INSTALLATION_ROOT/packages
+          ${{ env.VCPKG_ROOT }}/installed
+          ${{ env.VCPKG_ROOT }}/packages
         key: ${{ matrix.os.image }}-vcpkg
     # - name: Restore artifacts, or setup vcpkg (do not install any package)
     #   uses: lukka/run-vcpkg@v10
