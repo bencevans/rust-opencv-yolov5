@@ -6,6 +6,7 @@ use opencv::{
     Error,
 };
 
+/// Wrapper around OpenCV's DNN module for YOLOv5 inference.
 pub struct YoloModel {
     net: opencv::dnn::Net,
     input_size: opencv::core::Size_<i32>,
@@ -62,7 +63,7 @@ impl YoloModel {
                 height: self.input_size.height,
             },
             Scalar::new(0f64, 0f64, 0f64, 0f64),
-            true,
+            false,
             false,
             CV_32F,
         )

@@ -1,0 +1,66 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os:
+          - image: ubuntu-20.04
+            family: linux
+            triplet: x64-linux
+          - image: macos-11
+            family: osx
+            triplet: x64-osx
+          - image: windows-2022
+            family: windows
+            triplet: x64-windows-static-md
+
+    runs-on: ${{ matrix.os.image }}
+
+    steps:
+    - name: Install Linux System Dependencies
+      run: sudo apt-get update && sudo apt-get install -y libdbus-1-3 libdbus-1-dev libxi-dev libxtst-dev libgles2-mesa-dev libgtk-3-dev
+      if: runner.os == 'Linux'
+    - name: Install Windows System Dependencies
+      run: choco install -y wget
+      if: runner.os == 'Windows'
+    - name: Setup Rust Toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - uses: actions/checkout@v3
+    - name: Set VCPKG_ROOT
+      run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ env.VCPKG_ROOT }}/installed
+          ${{ env.VCPKG_ROOT }}/packages
+        key: ${{ matrix.os.image }}-vcpkg
+    # - name: Restore artifacts, or setup vcpkg (do not install any package)
+    #   uses: lukka/run-vcpkg@v10
+    #   with:
+    #     vcpkgGitCommitId: "6f7ffeb18f99796233b958aaaf14ec7bd4fb64b2"
+    - name: Build OpenCV
+      run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
+    - name: Build
+      run: cargo build --verbose
+    - name: Download Model
+      run: wget -q https://github.com/bencevans/megadetector-onnx/releases/download/v0.1.0/md_v5a.0.0-640x640.onnx
+    - name: Run tests
+      run: cargo test --verbose
