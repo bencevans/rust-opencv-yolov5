@@ -40,7 +40,7 @@ jobs:
         toolchain: stable
     - uses: actions/checkout@v3
     - name: Set VCPKG_ROOT
-      run: echo "VCPKG_ROOT=${{ github.workspace }}\vcpkg" >> $GITHUB_ENV
+      run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
     # - name: Restore artifacts, or setup vcpkg (do not install any package)
     #   uses: lukka/run-vcpkg@v10
     #   with:
