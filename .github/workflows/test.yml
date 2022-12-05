@@ -17,12 +17,15 @@ jobs:
 
     strategy:
       matrix:
-        - os: ubuntu-latest
-          triplet: x64-linux
-        - os: macos-latest
-          triplet: x64-macos
+        os:
+          - image: ubuntu-20.04
+            family: linux
+            triplet: x64-linux
+          - image: macos-11
+            family: osx
+            triplet: x64-osx
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os.image }}
 
     steps:
     - name: Install System Dependencies
