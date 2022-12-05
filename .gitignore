@@ -2,3 +2,4 @@
 /Cargo.lock
 *.onnx
 output.jpg
+vcpkg_installed

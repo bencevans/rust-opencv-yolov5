@@ -24,9 +24,9 @@ jobs:
       with:
         vcpkgGitCommitId: "6f7ffeb18f99796233b958aaaf14ec7bd4fb64b2"
         runVcpkgInstall: true
-    - name: Build
-      run: cargo build --verbose
-    - name: Download Model
-      run: wget -q https://github.com/bencevans/megadetector-onnx/releases/download/v0.1.0/md_v5a.0.0-640x640.onnx
-    - name: Run tests
-      run: cargo test --verbose
+    # - name: Build
+    #   run: cargo build --verbose
+    # - name: Download Model
+    #   run: wget -q https://github.com/bencevans/megadetector-onnx/releases/download/v0.1.0/md_v5a.0.0-640x640.onnx
+    # - name: Run tests
+    #   run: cargo test --verbose
