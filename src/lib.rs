@@ -16,7 +16,7 @@ mod tests {
     fn create_model() {
         let image_path = "test/dataset/IMG_0089_peccary.JPG";
 
-        let model = YoloModel::new_from_file("md_v5a.0.0.onnx", (640, 640));
+        let model = YoloModel::new_from_file("md_v5a.0.0-640x640.onnx", (640, 640));
 
         let mut model = model.unwrap();
 
