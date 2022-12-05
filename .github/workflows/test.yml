@@ -38,7 +38,7 @@ jobs:
     - name: Install Windows System Dependencies
       run: choco install -y wget
       if: runner.os == 'Windows'
-    - name: Install minimal nightly
+    - name: Setup Rust Toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
