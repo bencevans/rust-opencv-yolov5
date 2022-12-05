@@ -24,6 +24,9 @@ jobs:
           - image: macos-11
             family: osx
             triplet: x64-osx
+          - image: windows-2022
+            family: windows
+            triplet: x64-windows-static-md
 
     runs-on: ${{ matrix.os.image }}
 
