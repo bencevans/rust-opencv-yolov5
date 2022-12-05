@@ -9,10 +9,20 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+
+
+
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        - os: ubuntu-latest
+          triplet: x64-linux
+        - os: macos-latest
+          triplet: x64-macos
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Install System Dependencies
