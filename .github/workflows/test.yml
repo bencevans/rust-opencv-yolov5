@@ -36,7 +36,8 @@ jobs:
       uses: lukka/run-vcpkg@v10
       with:
         vcpkgGitCommitId: "6f7ffeb18f99796233b958aaaf14ec7bd4fb64b2"
-        runVcpkgInstall: true
+    - name: Build OpenCV
+      run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
     # - name: Build
     #   run: cargo build --verbose
     # - name: Download Model
