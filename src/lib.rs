@@ -14,19 +14,13 @@ mod tests {
 
     #[test]
     fn create_model() {
-        let image_path = "/Users/ben/demo-dataset/IMG_0173_multi.JPG";
+        let image_path = "test/dataset/IMG_0089_peccary.JPG";
 
-        let model = YoloModel::new_from_file(
-            "/Users/ben/Projects/camtrap-detector/md_v5a.0.0.onnx",
-            (640, 640),
-        );
-        assert!(model.is_ok());
+        let model = YoloModel::new_from_file("md_v5a.0.0.onnx", (640, 640));
 
         let mut model = model.unwrap();
 
-        let detections = model.detect(image_path, 0.1, 0.45);
-
-        assert!(detections.is_ok());
+        let detections = model.detect(image_path, 0.5, 0.45);
 
         let detections = detections.unwrap();
 
