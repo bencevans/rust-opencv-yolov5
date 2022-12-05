@@ -37,6 +37,10 @@ jobs:
     - name: Install Windows System Dependencies
       run: choco install -y wget
       if: runner.os == 'Windows'
+    - name: Install minimal nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
     - uses: actions/checkout@v3
     - name: Restore artifacts, or setup vcpkg (do not install any package)
       uses: lukka/run-vcpkg@v10
