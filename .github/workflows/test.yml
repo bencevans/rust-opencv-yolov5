@@ -9,9 +9,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-
-
-
 jobs:
   build:
 
@@ -41,20 +38,13 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-    - name: Maximize build space
-      uses: easimon/maximize-build-space@master
-      with:
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-      if: runner.os == 'Windows'
     - uses: actions/checkout@v3
-    - name: Restore artifacts, or setup vcpkg (do not install any package)
-      uses: lukka/run-vcpkg@v10
-      with:
-        vcpkgGitCommitId: "6f7ffeb18f99796233b958aaaf14ec7bd4fb64b2"
+    # - name: Restore artifacts, or setup vcpkg (do not install any package)
+    #   uses: lukka/run-vcpkg@v10
+    #   with:
+    #     vcpkgGitCommitId: "6f7ffeb18f99796233b958aaaf14ec7bd4fb64b2"
     - name: Build OpenCV
-      run: ./vcpkg/vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
+      run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
     - name: Build
       run: cargo build --verbose
     - name: Download Model
