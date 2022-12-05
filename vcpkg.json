@@ -1,0 +1,10 @@
+{
+  "name": "opencv-yolo5",
+  "version-string": "0.0.0-dev",
+  "dependencies": [
+    {
+      "name": "opencv4",
+      "features": [ "dnn" ]
+    }
+  ]
+}
