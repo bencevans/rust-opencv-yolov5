@@ -62,7 +62,7 @@ jobs:
         channels: conda-forge
 
     - name: Install CUDA
-      run: conda install -c conda-forge cudatoolkit cudnn
+      run: conda install -c conda-forge cudatoolkit cudnn nvcc_linux-64 nvcc_win-64
       if: matrix.os.cuda == true
 
     - name: Setup Rust Toolchain
