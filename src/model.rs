@@ -117,26 +117,19 @@ pub struct YoloModel {
 impl YoloModel {
     /// Create a new YoloModel from an ONNX file.
     pub fn new_from_file(model_path: &str, input_size: (i32, i32)) -> Result<Self, Error> {
-        let mut network = read_net_from_onnx(model_path)?;
-
-        let cuda_count = opencv::core::get_cuda_enabled_device_count()?;
-        info!("CUDA enabled device count: {}", cuda_count);
-
-        if cuda_count > 0 {
-            network.set_preferable_backend(opencv::dnn::DNN_BACKEND_CUDA)?;
-            network.set_preferable_target(opencv::dnn::DNN_TARGET_CUDA)?;
-        }
-
-        Ok(Self {
-            net: network,
-            input_size: opencv::core::Size_::new(input_size.0, input_size.1),
-        })
+        YoloModel::new_from_network(read_net_from_onnx(model_path)?, input_size)
     }
 
     /// Create a new YoloModel from an ONNX buffer.
     pub fn new_from_buffer(buffer: &Vector<u8>, input_size: (i32, i32)) -> Result<Self, Error> {
-        let mut network = read_net_from_onnx_buffer(buffer)?;
+        YoloModel::new_from_network(read_net_from_onnx_buffer(buffer)?, input_size)
+    }
 
+    /// Create a new YoloModel from an pre-loaded OpenCV DNN network.
+    pub fn new_from_network(
+        mut network: opencv::dnn::Net,
+        input_size: (i32, i32),
+    ) -> Result<Self, Error> {
         let cuda_count = opencv::core::get_cuda_enabled_device_count()?;
         info!("CUDA enabled device count: {}", cuda_count);
 
