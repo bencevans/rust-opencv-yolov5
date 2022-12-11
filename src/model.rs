@@ -9,14 +9,14 @@ use tracing::info;
 
 /// Calculate Intersection Over Union (IOU) between two bounding boxes.
 fn iou(a: &YoloDetection, b: &YoloDetection) -> f32 {
-    let x1 = a.x.max(b.x);
-    let y1 = a.y.max(b.y);
-    let x2 = a.x + a.width.min(b.width);
-    let y2 = a.y + a.height.min(b.height);
+    let area_a = a.area();
+    let area_b = b.area();
 
-    let intersection = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
-    let area_a = a.width * a.height;
-    let area_b = b.width * b.height;
+    let top_left = (a.x.max(b.x), a.y.max(b.y));
+    let bottom_right = (a.x + a.width.min(b.width), a.y + a.height.min(b.height));
+
+    let intersection =
+        (bottom_right.0 - top_left.0).max(0.0) * (bottom_right.1 - top_left.1).max(0.0);
 
     intersection / (area_a + area_b - intersection)
 }
@@ -201,5 +201,76 @@ impl YoloModel {
             image_height: image.rows() as u32,
             detections,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_iou() {
+        let detection_a = YoloDetection {
+            x: 0.0,
+            y: 0.0,
+            width: 1.0,
+            height: 1.0,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        let detection_b = YoloDetection {
+            x: 0.0,
+            y: 0.0,
+            width: 1.0,
+            height: 0.5,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        assert_eq!(iou(&detection_a, &detection_a), 1.0);
+        assert_eq!(iou(&detection_a, &detection_b), 0.5);
+
+        let detection_a = YoloDetection {
+            x: 10.0,
+            y: 10.0,
+            width: 1.0,
+            height: 1.0,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        let detection_b = YoloDetection {
+            x: 10.0,
+            y: 10.0,
+            width: 1.0,
+            height: 0.5,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        assert_eq!(iou(&detection_a, &detection_a), 1.0);
+        assert_eq!(iou(&detection_a, &detection_b), 0.5);
+
+        let detection_a = YoloDetection {
+            x: 0.0,
+            y: 0.0,
+            width: 3.0,
+            height: 3.0,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        let detection_b = YoloDetection {
+            x: 2.0,
+            y: 0.0,
+            width: 3.0,
+            height: 3.0,
+            class_index: 0,
+            confidence: 0.0,
+        };
+
+        assert_eq!(iou(&detection_a, &detection_a), 1.0);
+        assert_eq!(iou(&detection_a, &detection_b), 0.2);
     }
 }

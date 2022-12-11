@@ -1,6 +1,6 @@
 fn main() {
-  if cfg!(target_os = "macos") {
-      println!("cargo:rustc-link-lib=framework=OpenCL");
-      println!("cargo:rustc-link-lib=framework=Accelerate");
-  }
+    if cfg!(target_os = "macos") {
+        println!("cargo:rustc-link-lib=framework=OpenCL");
+        println!("cargo:rustc-link-lib=framework=Accelerate");
+    }
 }

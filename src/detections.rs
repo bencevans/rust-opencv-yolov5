@@ -37,3 +37,9 @@ pub struct YoloDetection {
     /// Softmaxed Activation
     pub confidence: f32,
 }
+
+impl YoloDetection {
+    pub fn area(&self) -> f32 {
+        self.width * self.height
+    }
+}
