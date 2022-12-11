@@ -61,17 +61,10 @@ jobs:
         python-version: 3.7
         channels: conda-forge
 
-    - name: Install CUDA on Linux
-      run: conda install -c conda-forge cudatoolkit cudnn
+    - name: Install CUDA
+      run: conda install -c nvidia cudatoolkit cudnn
       if: matrix.os.cuda == true
 
-    - name: Install Nvcc on Linux
-      run: conda install -c conda-forge nvcc_linux-64
-      if: matrix.os.cuda == false && runner.os == 'Linux'
-
-    - name: Install Nvcc on Windows
-      run: conda install -c conda-forge nvcc_win-64
-      if: matrix.os.cuda == false && runner.os == 'Windows'
 
     - name: Setup Rust Toolchain
       uses: actions-rs/toolchain@v1
