@@ -9,12 +9,14 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-defaults:
-  run:
-    shell: bash
+
 
 jobs:
   build:
+
+    defaults:
+      run:
+        shell: bash -l {0}
 
     strategy:
       matrix:
@@ -57,6 +59,9 @@ jobs:
       with:
         auto-update-conda: true
         python-version: 3.7
+        channels: conda-forge
+
+
 
     - name: Install CUDA
       run: conda install -c conda-forge cudatoolkit cudnn
