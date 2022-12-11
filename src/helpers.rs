@@ -1,11 +1,8 @@
-use std::path::{ PathBuf, Path};
-
+use crate::detections::YoloImageDetections;
 use image::Rgb;
 use imageproc::drawing::draw_hollow_rect_mut;
 use imageproc::rect::Rect;
-
-use crate::detections::YoloImageDetections;
-
+use std::path::{Path, PathBuf};
 
 const IMAGE_EXTENTIONS: [&str; 3] = ["jpg", "jpeg", "png"];
 

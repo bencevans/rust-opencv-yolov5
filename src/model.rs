@@ -7,6 +7,107 @@ use opencv::{
 };
 use tracing::info;
 
+/// Calculate Intersection Over Union (IOU) between two bounding boxes.
+fn iou(a: &YoloDetection, b: &YoloDetection) -> f32 {
+    let x1 = a.x.max(b.x);
+    let y1 = a.y.max(b.y);
+    let x2 = a.x + a.width.min(b.width);
+    let y2 = a.y + a.height.min(b.height);
+
+    let intersection = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
+    let area_a = a.width * a.height;
+    let area_b = b.width * b.height;
+
+    intersection / (area_a + area_b - intersection)
+}
+
+/// Non-Maximum Suppression
+fn non_max_suppression(detections: Vec<YoloDetection>, nms_threshold: f32) -> Vec<YoloDetection> {
+    let mut suppressed_detections: Vec<YoloDetection> = vec![];
+    let mut sorted_detections: Vec<YoloDetection> = detections.to_vec();
+
+    sorted_detections.sort_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap());
+
+    for i in 0..sorted_detections.len() {
+        let mut keep = true;
+        for j in 0..i {
+            let iou = iou(&sorted_detections[i], &sorted_detections[j]);
+            if iou > nms_threshold {
+                keep = false;
+                break;
+            }
+        }
+        if keep {
+            suppressed_detections.push(sorted_detections[i].clone());
+        }
+    }
+    suppressed_detections
+}
+
+/// Convert the output of the YOLOv5 model to a vector of [YoloDetection].
+fn convert_to_detections(outputs: &Mat) -> Result<Vec<YoloDetection>, Error> {
+    let rows = *outputs.mat_size().get(1).unwrap();
+    let mut detections = Vec::<YoloDetection>::with_capacity(rows as usize);
+
+    for row in 0..rows {
+        let cx: &f32 = outputs.at_3d(0, row, 0)?;
+        let cy: &f32 = outputs.at_3d(0, row, 1)?;
+        let w: &f32 = outputs.at_3d(0, row, 2)?;
+        let h: &f32 = outputs.at_3d(0, row, 3)?;
+        let sc: &f32 = outputs.at_3d(0, row, 4)?;
+
+        let mut x_min = *cx - *w / 2.0;
+        let mut y_min = *cy - *h / 2.0;
+
+        x_min /= 640.0;
+        y_min /= 640.0;
+        let mut width = *w / 640.0;
+        let mut height = *h / 640.0;
+
+        x_min = x_min.max(0.0).min(1_f32);
+        y_min = y_min.max(0.0).min(1_f32);
+        width = width.max(0.0).min(1_f32);
+        height = height.max(0.0).min(1_f32);
+
+        let mat_size = outputs.mat_size();
+        let classes = *mat_size.get(2).unwrap() - 5;
+        let mut classes_confidences = vec![];
+
+        for j in 5..5 + classes {
+            let confidence: &f32 = outputs.at_3d(0, row, j)?;
+            classes_confidences.push(confidence);
+        }
+
+        let mut max_index = 0;
+        let mut max_confidence = 0.0;
+        for (index, confidence) in classes_confidences.iter().enumerate() {
+            if *confidence > &max_confidence {
+                max_index = index;
+                max_confidence = **confidence;
+            }
+        }
+
+        detections.push(YoloDetection {
+            x: x_min,
+            y: y_min,
+            width,
+            height,
+            class_index: max_index as u32,
+            confidence: *sc,
+        })
+    }
+
+    Ok(detections)
+}
+
+/// Filter detections by confidence.
+fn filter_confidence(detections: Vec<YoloDetection>, min_confidence: f32) -> Vec<YoloDetection> {
+    detections
+        .into_iter()
+        .filter(|dsetection| dsetection.confidence >= min_confidence)
+        .collect()
+}
+
 /// Wrapper around OpenCV's DNN module for YOLOv5 inference.
 pub struct YoloModel {
     net: opencv::dnn::Net,
@@ -50,15 +151,10 @@ impl YoloModel {
         })
     }
 
-    /// Load an OpenCV image.
+    /// Load an OpenCV image, resize and adjust the color channels.
     fn load_image(&self, image_path: &str) -> Result<Mat, Error> {
-        opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)
-    }
-
-    /// Load an image from a file to OpenCV Mat.
-    fn image_to_blob(&mut self, image_mat: &Mat) -> Result<Mat, Error> {
         opencv::dnn::blob_from_image(
-            image_mat,
+            &opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)?,
             1.0 / 255.0,
             opencv::core::Size_ {
                 width: self.input_size.width,
@@ -84,107 +180,6 @@ impl YoloModel {
         output_tensor_blobs.get(0)
     }
 
-    fn convert_to_detections(&self, outputs: &Mat) -> Result<Vec<YoloDetection>, Error> {
-        let rows = *outputs.mat_size().get(1).unwrap();
-        let mut detections = Vec::<YoloDetection>::with_capacity(rows as usize);
-
-        for row in 0..rows {
-            let cx: &f32 = outputs.at_3d(0, row, 0)?;
-            let cy: &f32 = outputs.at_3d(0, row, 1)?;
-            let w: &f32 = outputs.at_3d(0, row, 2)?;
-            let h: &f32 = outputs.at_3d(0, row, 3)?;
-            let sc: &f32 = outputs.at_3d(0, row, 4)?;
-
-            let mut x_min = *cx - *w / 2.0;
-            let mut y_min = *cy - *h / 2.0;
-
-            x_min /= 640.0;
-            y_min /= 640.0;
-            let mut width = *w / 640.0;
-            let mut height = *h / 640.0;
-
-            x_min = x_min.max(0.0).min(1_f32);
-            y_min = y_min.max(0.0).min(1_f32);
-            width = width.max(0.0).min(1_f32);
-            height = height.max(0.0).min(1_f32);
-
-            let mat_size = outputs.mat_size();
-            let classes = *mat_size.get(2).unwrap() - 5;
-            let mut classes_confidences = vec![];
-
-            for j in 5..5 + classes {
-                let confidence: &f32 = outputs.at_3d(0, row, j)?;
-                classes_confidences.push(confidence);
-            }
-
-            let mut max_index = 0;
-            let mut max_confidence = 0.0;
-            for (index, confidence) in classes_confidences.iter().enumerate() {
-                if *confidence > &max_confidence {
-                    max_index = index;
-                    max_confidence = **confidence;
-                }
-            }
-
-            detections.push(YoloDetection {
-                x: x_min,
-                y: y_min,
-                width,
-                height,
-                class_index: max_index as u32,
-                confidence: *sc,
-            })
-        }
-
-        Ok(detections)
-    }
-
-    fn filter_confidence(&self, detections: Vec<YoloDetection>, min_confidence: f32) -> Vec<YoloDetection> {
-        detections
-            .into_iter()
-            .filter(|dsetection| dsetection.confidence >= min_confidence)
-            .collect()
-    }
-
-    fn iou(&self, a: &YoloDetection, b: &YoloDetection) -> f32 {
-        let x1 = a.x.max(b.x);
-        let y1 = a.y.max(b.y);
-        let x2 = a.x + a.width.min(b.width);
-        let y2 = a.y + a.height.min(b.height);
-
-        let intersection = (x2 - x1).max(0.0) * (y2 - y1).max(0.0);
-        let area_a = a.width * a.height;
-        let area_b = b.width * b.height;
-
-        intersection / (area_a + area_b - intersection)
-    }
-
-    fn non_max_suppression(
-        &self,
-        detections: Vec<YoloDetection>,
-        nms_threshold: f32,
-    ) -> Vec<YoloDetection> {
-        let mut suppressed_detections: Vec<YoloDetection> = vec![];
-        let mut sorted_detections: Vec<YoloDetection> = detections.to_vec();
-
-        sorted_detections.sort_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap());
-
-        for i in 0..sorted_detections.len() {
-            let mut keep = true;
-            for j in 0..i {
-                let iou = self.iou(&sorted_detections[i], &sorted_detections[j]);
-                if iou > nms_threshold {
-                    keep = false;
-                    break;
-                }
-            }
-            if keep {
-                suppressed_detections.push(sorted_detections[i].clone());
-            }
-        }
-        suppressed_detections
-    }
-
     /// Run the model on an image and return the detections.
     pub fn detect(
         &mut self,
@@ -192,21 +187,20 @@ impl YoloModel {
         minimum_confidence: f32,
         nms_threshold: f32,
     ) -> Result<YoloImageDetections, Error> {
-        // Load the image as a Mat.
+        // Load the image
         let image = self.load_image(image_path)?;
-        let image_blob = self.image_to_blob(&image)?;
 
         // Run the model on the image.
-        let result = self.forward(&image_blob)?;
+        let result = self.forward(&image)?;
 
         // Convert the result to a Vec of Detections.
-        let detections = self.convert_to_detections(&result)?;
+        let detections = convert_to_detections(&result)?;
 
         // Filter the detections by confidence.
-        let detections = self.filter_confidence(detections, minimum_confidence);
+        let detections = filter_confidence(detections, minimum_confidence);
 
         // Non-maximum suppression.
-        let detections = self.non_max_suppression(detections, nms_threshold);
+        let detections = non_max_suppression(detections, nms_threshold);
 
         Ok(YoloImageDetections {
             file: image_path.to_string(),
