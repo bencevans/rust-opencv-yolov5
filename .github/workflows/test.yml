@@ -22,12 +22,23 @@ jobs:
           - image: ubuntu-20.04
             family: linux
             triplet: x64-linux
+            cuda: false
+          - image: ubuntu-20.04
+            family: linux
+            triplet: x64-linux
+            cuda: true
           - image: macos-11
             family: osx
             triplet: x64-osx
+            cuda: false
           - image: windows-2022
             family: windows
             triplet: x64-windows-static-md
+            cuda: false
+          - image: windows-2022
+            family: windows
+            triplet: x64-windows-static-md
+            cuda: true
 
     runs-on: ${{ matrix.os.image }}
 
@@ -40,6 +51,13 @@ jobs:
     - name: Install Windows System Dependencies
       run: choco install -y wget
       if: runner.os == 'Windows'
+
+    - name: Install CUDA
+      uses: Jimver/cuda-toolkit@v0.2.8
+      id: cuda-toolkit
+      with:
+        cuda: '11.7.0'
+      if: matrix.os.cuda == true
 
     - name: Setup Rust Toolchain
       uses: actions-rs/toolchain@v1
@@ -58,10 +76,15 @@ jobs:
         path: |
           ${{ env.VCPKG_ROOT }}/installed
           ${{ env.VCPKG_ROOT }}/packages
-        key: ${{ matrix.os.image }}-vcpkg-opencv4[dnn]-${{ matrix.os.triplet }}
+        key: ${{ matrix.os.image }}-vcpkg-opencv4[dnn]-${{ matrix.os.triplet }}-${{ "cuda" if matrix.os.cuda else "cpu" }}
 
     - name: Build OpenCV
       run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
+      if: matrix.os.cuda == false
+
+    - name: Build OpenCV with CUDA
+      run: vcpkg install opencv4[dnn,cuda]:${{ matrix.os.triplet }}
+      if: matrix.os.cuda == true
 
     - name: Cache Rust
       uses: actions/cache@v2
