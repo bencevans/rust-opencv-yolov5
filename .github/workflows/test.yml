@@ -51,6 +51,12 @@ jobs:
     - name: Install Windows System Dependencies
       run: choco install -y wget
       if: runner.os == 'Windows'
+    
+    - name: Install Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: 3.7
 
     - name: Install CUDA
       run: conda install -c conda-forge cudatoolkit cudnn
