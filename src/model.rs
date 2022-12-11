@@ -5,6 +5,7 @@ use opencv::{
     prelude::{Mat, MatTraitConst, NetTrait, NetTraitConst},
     Error,
 };
+use tracing::info;
 
 /// Wrapper around OpenCV's DNN module for YOLOv5 inference.
 pub struct YoloModel {
@@ -18,7 +19,7 @@ impl YoloModel {
         let mut network = read_net_from_onnx(model_path)?;
 
         let cuda_count = opencv::core::get_cuda_enabled_device_count()?;
-        println!("CUDA enabled device count: {}", cuda_count);
+        info!("CUDA enabled device count: {}", cuda_count);
 
         if cuda_count > 0 {
             network.set_preferable_backend(opencv::dnn::DNN_BACKEND_CUDA)?;
@@ -36,7 +37,7 @@ impl YoloModel {
         let mut network = read_net_from_onnx_buffer(buffer)?;
 
         let cuda_count = opencv::core::get_cuda_enabled_device_count()?;
-        println!("CUDA enabled device count: {}", cuda_count);
+        info!("CUDA enabled device count: {}", cuda_count);
 
         if cuda_count > 0 {
             network.set_preferable_backend(opencv::dnn::DNN_BACKEND_CUDA)?;

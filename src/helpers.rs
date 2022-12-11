@@ -53,8 +53,6 @@ pub fn render_detections(
     let mut image = image.to_rgb8();
 
     for detection in &detections.detections {
-        println!("{:?}", detection);
-
         let x = (detection.x) * image.width() as f32;
         let y = (detection.y) * image.height() as f32;
         let width = (detection.width) * image.width() as f32;
