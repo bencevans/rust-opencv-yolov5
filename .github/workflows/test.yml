@@ -83,7 +83,7 @@ jobs:
       if: matrix.os.cuda == false
 
     - name: Build OpenCV with CUDA
-      run: vcpkg install opencv4[dnn,cudnn]:${{ matrix.os.triplet }}
+      run: vcpkg install opencv4[dnn,cuda]:${{ matrix.os.triplet }}
       if: matrix.os.cuda == true
 
     - name: Cache Rust
