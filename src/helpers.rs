@@ -9,6 +9,7 @@ use crate::detections::YoloImageDetections;
 
 const IMAGE_EXTENTIONS: [&str; 3] = ["jpg", "jpeg", "png"];
 
+/// Check if path is a known image extention
 pub fn is_image_path(path: &Path) -> bool {
     match path.extension() {
         None => false,
@@ -16,6 +17,7 @@ pub fn is_image_path(path: &Path) -> bool {
     }
 }
 
+/// Find all images beleived to be an image.
 pub fn enumerate_images(root_dir: PathBuf, recursive: bool) -> Vec<PathBuf> {
     if root_dir.is_file() {
         if is_image_path(&root_dir) {
@@ -41,6 +43,7 @@ pub fn enumerate_images(root_dir: PathBuf, recursive: bool) -> Vec<PathBuf> {
     }
 }
 
+/// Render Bounding Boxes onto an Image and Save
 pub fn render_detections(
     image_path: &str,
     detections: &YoloImageDetections,
@@ -69,7 +72,7 @@ pub fn render_detections(
     Ok(())
 }
 
-
+/// Checks if CUDA and a Supported CUDA device can be found.
 pub fn is_cuda_available() -> bool {
     match opencv::core::get_cuda_enabled_device_count() {
         Ok(count) => count > 0,

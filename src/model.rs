@@ -49,6 +49,7 @@ impl YoloModel {
         })
     }
 
+    /// Load an OpenCV image.
     fn load_image(&self, image_path: &str) -> Result<Mat, Error> {
         opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)
     }
