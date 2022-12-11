@@ -62,6 +62,13 @@ jobs:
         channels: conda-forge
 
     - name: Install CUDA
+      uses: Jimver/cuda-toolkit@v0.2.8
+      id: cuda-toolkit
+      with:
+        cuda: '11.7.0'
+      if: matrix.os.cuda == true
+
+    - name: Install CUDA
       run: conda install -c nvidia cuda cudatoolkit-dev cudnn cuda-nvcc
       if: matrix.os.cuda == true
 
