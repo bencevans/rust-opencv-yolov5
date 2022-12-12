@@ -23,10 +23,6 @@ jobs:
             family: linux
             triplet: x64-linux
             cuda: false
-          - image: ubuntu-20.04
-            family: linux
-            triplet: x64-linux
-            cuda: true
           - image: macos-11
             family: osx
             triplet: x64-osx
