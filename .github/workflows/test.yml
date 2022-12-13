@@ -53,6 +53,8 @@ jobs:
       id: cuda-toolkit
       with:
         cuda: '11.7.0'
+        method: 'network'
+        use-github-cache: false
       if: matrix.os.cuda == true
 
     - name: Setup Rust Toolchain
