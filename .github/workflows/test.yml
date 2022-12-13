@@ -58,7 +58,8 @@ jobs:
       if: matrix.os.cuda == true
     
     # https://github.com/mlverse/torchvisionlib/blob/main/.github/workflows/R-CMD-check.yaml
-    - if: ${{ matrix.os.cuda == true && runner.os == 'Windows' }}
+    - name: Install cuDNN
+      if: ${{ matrix.os.cuda == true && runner.os == 'Windows' }}
       shell: powershell
       run: |
           wget "https://storage.googleapis.com/torch-lantern-builds/cudnn/cudnn-11.3-windows-x64-v8.2.1.32.zip" -O cudnn.zip
