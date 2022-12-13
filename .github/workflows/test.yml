@@ -56,6 +56,22 @@ jobs:
         method: 'network'
         use-github-cache: false
       if: matrix.os.cuda == true
+    
+    # https://github.com/mlverse/torchvisionlib/blob/main/.github/workflows/R-CMD-check.yaml
+    - if: ${{ mamatrix.os.cuda == true && runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+          curl "https://storage.googleapis.com/torch-lantern-builds/cudnn/cudnn-11.3-windows-x64-v8.2.1.32.zip" --output cudnn.zip --silent --location
+          Expand-Archive -Path cudnn.zip -DestinationPath "C:\cudnn"
+          Get-ChildItem -Path "C:\cudnn"
+          Get-ChildItem -Path "${env:CUDA_PATH}"
+          Move-Item -Path "C:\cudnn\cuda\bin\cudnn*.dll" -Destination "${env:CUDA_PATH}\bin"
+          Move-Item -Path "C:\cudnn\cuda\include\cudnn*.h" -Destination "${env:CUDA_PATH}\include"
+          Move-Item -Path "C:\cudnn\cuda\lib\x64\cudnn*.lib" -Destination "${env:CUDA_PATH}\lib\x64"
+          echo "CUDNN_INCLUDE_PATH=""${CUDA_PATH}\include""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "CUDNN_LIBRARY_PATH=""${CUDA_PATH}\lib\x64""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    
 
     - name: Setup Rust Toolchain
       uses: actions-rs/toolchain@v1
