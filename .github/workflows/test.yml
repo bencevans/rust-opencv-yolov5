@@ -53,8 +53,8 @@ jobs:
       id: cuda-toolkit
       with:
         cuda: '11.7.0'
-        method: 'network'
-        use-github-cache: false
+#         method: 'network'
+#         use-github-cache: false
       if: matrix.os.cuda == true
     
     # https://github.com/mlverse/torchvisionlib/blob/main/.github/workflows/R-CMD-check.yaml
@@ -96,7 +96,7 @@ jobs:
           ${{ matrix.os.image }}-vcpkg-opencv4[dnn]-${{ matrix.os.triplet }}-false
 
     - name: Build OpenCV
-      run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
+      run: vcpkg install --recurse opencv4[dnn]:${{ matrix.os.triplet }}
       if: matrix.os.cuda == false
 
     - name: Build OpenCV with CUDA
