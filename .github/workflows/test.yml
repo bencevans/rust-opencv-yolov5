@@ -61,7 +61,7 @@ jobs:
     - if: ${{ matrix.os.cuda == true && runner.os == 'Windows' }}
       shell: powershell
       run: |
-          curl "https://storage.googleapis.com/torch-lantern-builds/cudnn/cudnn-11.3-windows-x64-v8.2.1.32.zip" --output cudnn.zip --silent --location
+          wget "https://storage.googleapis.com/torch-lantern-builds/cudnn/cudnn-11.3-windows-x64-v8.2.1.32.zip" -O cudnn.zip
           Expand-Archive -Path cudnn.zip -DestinationPath "C:\cudnn"
           Get-ChildItem -Path "C:\cudnn"
           Get-ChildItem -Path "${env:CUDA_PATH}"
