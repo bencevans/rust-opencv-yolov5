@@ -92,6 +92,8 @@ jobs:
           ${{ env.VCPKG_ROOT }}/installed
           ${{ env.VCPKG_ROOT }}/packages
         key: ${{ matrix.os.image }}-vcpkg-opencv4[dnn]-${{ matrix.os.triplet }}-${{ matrix.os.cuda }}
+        restore-keys: |
+          ${{ matrix.os.image }}-vcpkg-opencv4[dnn]-${{ matrix.os.triplet }}-false
 
     - name: Build OpenCV
       run: vcpkg install opencv4[dnn]:${{ matrix.os.triplet }}
