@@ -5,7 +5,7 @@ use opencv::{
     prelude::{Mat, MatTraitConst, NetTrait, NetTraitConst},
     Error,
 };
-use tracing::info;
+use tracing::debug;
 
 /// Calculate Intersection Over Union (IOU) between two bounding boxes.
 fn iou(a: &YoloDetection, b: &YoloDetection) -> f32 {
@@ -131,7 +131,7 @@ impl YoloModel {
         input_size: (i32, i32),
     ) -> Result<Self, Error> {
         let cuda_count = opencv::core::get_cuda_enabled_device_count()?;
-        info!("CUDA enabled device count: {}", cuda_count);
+        debug!("CUDA enabled device count: {}", cuda_count);
 
         if cuda_count > 0 {
             network.set_preferable_backend(opencv::dnn::DNN_BACKEND_CUDA)?;
