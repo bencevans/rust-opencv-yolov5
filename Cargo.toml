@@ -14,7 +14,7 @@ opencv = { version = "0.74.0", default-features = false, features = ["dnn", "img
 shellexpand = {version = "3.0.0", optional = true}
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tracing = "~0.1"
+tracing = "~1"
 
 [features]
 default = ["cli"]
