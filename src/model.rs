@@ -145,19 +145,28 @@ impl YoloModel {
     }
 
     /// Load an OpenCV image, resize and adjust the color channels.
-    fn load_image(&self, image_path: &str) -> Result<Mat, Error> {
-        opencv::dnn::blob_from_image(
-            &opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)?,
-            1.0 / 255.0,
-            opencv::core::Size_ {
-                width: self.input_size.width,
-                height: self.input_size.height,
-            },
-            Scalar::new(0f64, 0f64, 0f64, 0f64),
-            false,
-            false,
-            CV_32F,
-        )
+    fn load_image(&self, image_path: &str) -> Result<(Mat, u32, u32), Error> {
+        let image = opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)?;
+
+        let width = image.cols() as u32;
+        let height = image.rows() as u32;
+
+        Ok((
+            opencv::dnn::blob_from_image(
+                &image,
+                1.0 / 255.0,
+                opencv::core::Size_ {
+                    width: self.input_size.width,
+                    height: self.input_size.height,
+                },
+                Scalar::new(0f64, 0f64, 0f64, 0f64),
+                false,
+                false,
+                CV_32F,
+            )?,
+            width,
+            height,
+        ))
     }
 
     /// Detect objects in an image.
@@ -181,7 +190,7 @@ impl YoloModel {
         nms_threshold: f32,
     ) -> Result<YoloImageDetections, Error> {
         // Load the image
-        let image = self.load_image(image_path)?;
+        let (image, image_width, image_height) = self.load_image(image_path)?;
 
         // Run the model on the image.
         let result = self.forward(&image)?;
@@ -197,8 +206,8 @@ impl YoloModel {
 
         Ok(YoloImageDetections {
             file: image_path.to_string(),
-            image_width: image.cols() as u32,
-            image_height: image.rows() as u32,
+            image_width,
+            image_height,
             detections,
         })
     }
