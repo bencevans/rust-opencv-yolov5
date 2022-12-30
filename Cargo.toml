@@ -19,3 +19,5 @@ tracing = "~0.1"
 [features]
 default = ["cli"]
 cli = ["dep:shellexpand", "dep:clap", "dep:indicatif"]
+cuda = []
+
