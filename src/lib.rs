@@ -24,6 +24,10 @@ mod tests {
 
         let detections = detections.unwrap();
 
+        assert_eq!(detections.image_width, 4608);
+        assert_eq!(detections.image_height, 2560);
+        assert_eq!(detections.file, image_path.to_string());
+
         assert_eq!(detections.detections.len(), 1);
 
         render_detections(image_path, &detections, "output.jpg").unwrap();
