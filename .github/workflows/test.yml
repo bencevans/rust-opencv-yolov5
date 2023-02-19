@@ -20,13 +20,13 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - image: ubuntu-20.04
+          - image: ubuntu-latest
             family: linux
             triplet: x64-linux
-          - image: macos-11
+          - image: macos-latest
             family: osx
             triplet: x64-osx
-          - image: windows-2022
+          - image: windows-latest
             family: windows
             triplet: x64-windows-static-md
 
