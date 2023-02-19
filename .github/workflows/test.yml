@@ -83,8 +83,5 @@ jobs:
         run: wget -q https://github.com/bencevans/megadetector-onnx/releases/download/v0.1.0/md_v5a.0.0-640x640.onnx
 
       - name: Run tests
-        run: cargo test --verboses \_\_VERSION\_\_ with the app version
-        #     releaseName: 'App v__VERSION__'
-        #     releaseBody: 'See the assets to download this version and install.'
-      #     releaseDraft: true
+        run: cargo test --verbose
       #     prerelease: false
