@@ -41,6 +41,10 @@ jobs:
     - name: Install Windows System Dependencies
       run: choco install -y wget
       if: runner.os == 'Windows'
+      
+    - name: Install macOS System Dependencies
+      run: brew install pkg-config
+      if: runner.os == 'macOS'
 
     - name: Setup Rust Toolchain
       uses: actions-rs/toolchain@v1
