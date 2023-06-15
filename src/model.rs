@@ -1,9 +1,9 @@
 use crate::{YoloDetection, YoloImageDetections};
 use opencv::{
-    core::{Scalar, Vector, CV_32F},
+    core::{copy_make_border, Scalar, Vector, BORDER_CONSTANT, CV_32F, Vec3b, Vec3f, CV_32FC1, Vec4d, Vec4f},
     dnn::{read_net_from_onnx, read_net_from_onnx_buffer},
-    prelude::{Mat, MatTraitConst, NetTrait, NetTraitConst},
-    Error,
+    prelude::{Mat, MatTraitConst, MatTraitConstManual, NetTrait, NetTraitConst},
+    Error, types::VectorOff32,
 };
 use tracing::info;
 
@@ -27,6 +27,7 @@ fn non_max_suppression(detections: Vec<YoloDetection>, nms_threshold: f32) -> Ve
     let mut sorted_detections: Vec<YoloDetection> = detections.to_vec();
 
     sorted_detections.sort_by(|a, b| a.confidence.partial_cmp(&b.confidence).unwrap());
+    sorted_detections.reverse();
 
     for i in 0..sorted_detections.len() {
         let mut keep = true;
@@ -148,25 +149,54 @@ impl YoloModel {
     fn load_image(&self, image_path: &str) -> Result<(Mat, u32, u32), Error> {
         let image = opencv::imgcodecs::imread(image_path, opencv::imgcodecs::IMREAD_COLOR)?;
 
+        let mut boxed_image = Mat::default();
+
+        copy_make_border(
+            &image,
+            &mut boxed_image,
+            0,
+            0,
+            0,
+            0,
+            BORDER_CONSTANT,
+            Scalar::new(114f64, 114f64, 114f64, 0f64),
+        )?;
+
         let width = image.cols() as u32;
         let height = image.rows() as u32;
 
-        Ok((
-            opencv::dnn::blob_from_image(
-                &image,
-                1.0 / 255.0,
-                opencv::core::Size_ {
-                    width: self.input_size.width,
-                    height: self.input_size.height,
-                },
-                Scalar::new(0f64, 0f64, 0f64, 0f64),
-                true,
-                false,
-                CV_32F,
-            )?,
-            width,
-            height,
-        ))
+        
+        // println!("scale factor: {:?}", 1.0 / 255.0);
+
+        let blob = opencv::dnn::blob_from_image(
+            &boxed_image,
+            1.0 / 255.0,
+            opencv::core::Size_ {
+                width: self.input_size.width,
+                height: self.input_size.height,
+            },
+            Scalar::new(0f64, 0f64, 0f64, 0f64),
+            true,
+            false,
+            CV_32F,
+        )?;
+
+        // scale the image values to 0..1
+
+        // println!("blob: {:?}", blob);
+
+        
+       
+
+        // print the values of the image
+        // for i in 0..height {
+        //     for j in 0..width {
+        //         let pixel = image.at_2d::<Vec3b>(i as i32, j as i32)?;
+        //         println!("pixel: {:?}", pixel);
+        //     }
+        // }
+
+        Ok((blob, width, height))
     }
 
     /// Detect objects in an image.
