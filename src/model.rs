@@ -160,7 +160,7 @@ impl YoloModel {
                     height: self.input_size.height,
                 },
                 Scalar::new(0f64, 0f64, 0f64, 0f64),
-                false,
+                true,
                 false,
                 CV_32F,
             )?,
