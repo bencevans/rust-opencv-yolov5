@@ -60,10 +60,10 @@ fn convert_to_detections(outputs: &Mat) -> Result<Vec<YoloDetection>, Error> {
         let mut x_min = *cx - *w / 2.0;
         let mut y_min = *cy - *h / 2.0;
 
-        x_min /= 640.0;
-        y_min /= 640.0;
-        let mut width = *w / 640.0;
-        let mut height = *h / 640.0;
+        x_min /= 1280.0;
+        y_min /= 1280.0;
+        let mut width = *w / 1280.0;
+        let mut height = *h / 1280.0;
 
         x_min = x_min.max(0.0).min(1_f32);
         y_min = y_min.max(0.0).min(1_f32);
