@@ -56,6 +56,10 @@ fn main() {
             .detect(image_path.to_str().unwrap(), 0.1, 0.45)
             .unwrap();
 
+        for detection in &detections.detections {
+            println!("{:?}", detection.confidence);
+        }
+
         results.push(detections);
     }
 

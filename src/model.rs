@@ -1,10 +1,14 @@
 use crate::{YoloDetection, YoloImageDetections};
 use opencv::{
-    core::{Scalar, Vector, CV_32F},
+    core::{Scalar, Vector, CV_32F,Mat, MatTrait, Point, Size, BORDER_CONSTANT},
     dnn::{read_net_from_onnx, read_net_from_onnx_buffer},
-    prelude::{Mat, MatTraitConst, NetTrait, NetTraitConst},
+    prelude::{MatTraitConst, NetTrait, NetTraitConst},
     Error,
 };
+use opencv::imgcodecs::{imread, IMREAD_COLOR};
+use opencv::prelude::MatTraitConstManual;
+// use opencv::core::Vector;
+
 use tracing::info;
 
 /// Calculate Intersection Over Union (IOU) between two bounding boxes.
@@ -151,10 +155,62 @@ impl YoloModel {
         let width = image.cols() as u32;
         let height = image.rows() as u32;
 
+        // Create a new image with the loaded
+
+        let largest_dim = image
+            .size()
+            .unwrap()
+            .width
+            .max(image.size().unwrap().height);
+        println!("largest_dim: {}", largest_dim);
+
+        // Letterbox the image.
+        let mut padded_image = Mat::default();
+        let mut top = 0;
+        let mut bottom = 0;
+        let mut left = 0;
+        let mut right = 0;
+
+        if image.size().unwrap().width > image.size().unwrap().height {
+            top = (largest_dim - image.size().unwrap().height) / 2;
+            bottom = top;
+            left = 0;
+            right = 0;
+        } else {
+            top = 0;
+            bottom = 0;
+            left = (largest_dim - image.size().unwrap().width) / 2;
+            right = left;
+        }
+
+        opencv::core::copy_make_border(
+            &image,
+            &mut padded_image,
+            top,
+            bottom,
+            left,
+            right,
+            BORDER_CONSTANT,
+            Scalar::new(0f64, 0f64, 0f64, 0f64),
+        )
+        .unwrap();
+
+        // Resize the image.
+        let mut resized_image = Mat::default();
+        opencv::imgproc::resize(
+            &padded_image,
+            &mut resized_image,
+            Size::new(640, 640),
+            0f64,
+            0f64,
+            opencv::imgproc::INTER_LINEAR,
+        )
+        .unwrap();
+
         Ok((
             opencv::dnn::blob_from_image(
-                &image,
-                1.0 / 255.0,
+                &resized_image,
+                1.0,
                 opencv::core::Size_ {
                     width: self.input_size.width,
                     height: self.input_size.height,
