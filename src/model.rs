@@ -1,9 +1,9 @@
 use crate::{YoloDetection, YoloImageDetections};
 use opencv::{
-    core::{copy_make_border, Scalar, Vector, BORDER_CONSTANT, CV_32F, Vec3b, Vec3f, CV_32FC1, Vec4d, Vec4f},
+    core::{copy_make_border, Scalar, Vector, BORDER_CONSTANT, CV_32F},
     dnn::{read_net_from_onnx, read_net_from_onnx_buffer},
-    prelude::{Mat, MatTraitConst, MatTraitConstManual, NetTrait, NetTraitConst},
-    Error, types::VectorOff32,
+    prelude::{Mat, MatTraitConst, NetTrait, NetTraitConst},
+    Error,
 };
 use tracing::info;
 
@@ -43,62 +43,6 @@ fn non_max_suppression(detections: Vec<YoloDetection>, nms_threshold: f32) -> Ve
         }
     }
     suppressed_detections
-}
-
-/// Convert the output of the YOLOv5 model to a vector of [YoloDetection].
-fn convert_to_detections(outputs: &Mat) -> Result<Vec<YoloDetection>, Error> {
-    let rows = *outputs.mat_size().get(1).unwrap();
-    let mut detections = Vec::<YoloDetection>::with_capacity(rows as usize);
-
-    for row in 0..rows {
-        let cx: &f32 = outputs.at_3d(0, row, 0)?;
-        let cy: &f32 = outputs.at_3d(0, row, 1)?;
-        let w: &f32 = outputs.at_3d(0, row, 2)?;
-        let h: &f32 = outputs.at_3d(0, row, 3)?;
-        let sc: &f32 = outputs.at_3d(0, row, 4)?;
-
-        let mut x_min = *cx - *w / 2.0;
-        let mut y_min = *cy - *h / 2.0;
-
-        x_min /= 1280.0;
-        y_min /= 1280.0;
-        let mut width = *w / 1280.0;
-        let mut height = *h / 1280.0;
-
-        x_min = x_min.max(0.0).min(1_f32);
-        y_min = y_min.max(0.0).min(1_f32);
-        width = width.max(0.0).min(1_f32);
-        height = height.max(0.0).min(1_f32);
-
-        let mat_size = outputs.mat_size();
-        let classes = *mat_size.get(2).unwrap() - 5;
-        let mut classes_confidences = vec![];
-
-        for j in 5..5 + classes {
-            let confidence: &f32 = outputs.at_3d(0, row, j)?;
-            classes_confidences.push(confidence);
-        }
-
-        let mut max_index = 0;
-        let mut max_confidence = 0.0;
-        for (index, confidence) in classes_confidences.iter().enumerate() {
-            if *confidence > &max_confidence {
-                max_index = index;
-                max_confidence = **confidence;
-            }
-        }
-
-        detections.push(YoloDetection {
-            x: x_min,
-            y: y_min,
-            width,
-            height,
-            class_index: max_index as u32,
-            confidence: *sc,
-        })
-    }
-
-    Ok(detections)
 }
 
 /// Filter detections by confidence.
@@ -165,7 +109,6 @@ impl YoloModel {
         let width = image.cols() as u32;
         let height = image.rows() as u32;
 
-        
         // println!("scale factor: {:?}", 1.0 / 255.0);
 
         let blob = opencv::dnn::blob_from_image(
@@ -180,21 +123,6 @@ impl YoloModel {
             false,
             CV_32F,
         )?;
-
-        // scale the image values to 0..1
-
-        // println!("blob: {:?}", blob);
-
-        
-       
-
-        // print the values of the image
-        // for i in 0..height {
-        //     for j in 0..width {
-        //         let pixel = image.at_2d::<Vec3b>(i as i32, j as i32)?;
-        //         println!("pixel: {:?}", pixel);
-        //     }
-        // }
 
         Ok((blob, width, height))
     }
@@ -212,6 +140,62 @@ impl YoloModel {
         output_tensor_blobs.get(0)
     }
 
+    /// Convert the output of the YOLOv5 model to a vector of [YoloDetection].
+    fn convert_to_detections(&self, outputs: &Mat) -> Result<Vec<YoloDetection>, Error> {
+        let rows = *outputs.mat_size().get(1).unwrap();
+        let mut detections = Vec::<YoloDetection>::with_capacity(rows as usize);
+
+        for row in 0..rows {
+            let cx: &f32 = outputs.at_3d(0, row, 0)?;
+            let cy: &f32 = outputs.at_3d(0, row, 1)?;
+            let w: &f32 = outputs.at_3d(0, row, 2)?;
+            let h: &f32 = outputs.at_3d(0, row, 3)?;
+            let sc: &f32 = outputs.at_3d(0, row, 4)?;
+
+            let mut x_min = *cx - *w / 2.0;
+            let mut y_min = *cy - *h / 2.0;
+
+            x_min /= self.input_size.width as f32;
+            y_min /= self.input_size.height as f32;
+            let mut width = *w / self.input_size.width as f32;
+            let mut height = *h / self.input_size.height as f32;
+
+            x_min = x_min.max(0.0).min(1_f32);
+            y_min = y_min.max(0.0).min(1_f32);
+            width = width.max(0.0).min(1_f32);
+            height = height.max(0.0).min(1_f32);
+
+            let mat_size = outputs.mat_size();
+            let classes = *mat_size.get(2).unwrap() - 5;
+            let mut classes_confidences = vec![];
+
+            for j in 5..5 + classes {
+                let confidence: &f32 = outputs.at_3d(0, row, j)?;
+                classes_confidences.push(confidence);
+            }
+
+            let mut max_index = 0;
+            let mut max_confidence = 0.0;
+            for (index, confidence) in classes_confidences.iter().enumerate() {
+                if *confidence > &max_confidence {
+                    max_index = index;
+                    max_confidence = **confidence;
+                }
+            }
+
+            detections.push(YoloDetection {
+                x: x_min,
+                y: y_min,
+                width,
+                height,
+                class_index: max_index as u32,
+                confidence: *sc,
+            })
+        }
+
+        Ok(detections)
+    }
+
     /// Run the model on an image and return the detections.
     pub fn detect(
         &mut self,
@@ -226,7 +210,7 @@ impl YoloModel {
         let result = self.forward(&image)?;
 
         // Convert the result to a Vec of Detections.
-        let detections = convert_to_detections(&result)?;
+        let detections = self.convert_to_detections(&result)?;
 
         // Filter the detections by confidence.
         let detections = filter_confidence(detections, minimum_confidence);
